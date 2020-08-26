@@ -1,1 +1,1 @@
-<%= name %>
+canvas flappy bird
