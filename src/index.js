@@ -5,13 +5,14 @@ const root = document.getElementById('root');
 
 // constants
 
-const CANVAS_WIDTH = 1000;
+const CANVAS_WIDTH = 1200;
 const CANVAS_HEIGHT = 400;
 
 const BAMBOO_WIDTH = 40;
-const BAMBOO_GAP = 100;
+const BAMBOO_GAP = 120;
+const BAMBOO_SPEED = 256;
 
-const X_GAP = 80;
+const X_GAP = 160;
 
 // create the canvas
 
@@ -23,12 +24,14 @@ canvas.style.background = '#fff';
 canvas.style.border = '1px solid grey';
 root.appendChild(canvas);
 
+let started = false;
+
 // game objects
 
 const hero = {
   speed: 256,
   x: 0,
-  y: 0
+  y: canvas.height / 2
 };
 
 const heroImage = new Image();
@@ -43,7 +46,7 @@ const bambooArray = [];
 function Bamboo(x) {
   this.x = x;
   this.width = BAMBOO_WIDTH;
-  this.upHeight = parseInt(Math.random() * 100, 10);
+  this.upHeight = parseInt(Math.random() * 200 + 50, 10);
   this.downHeight = canvas.height - this.upHeight - BAMBOO_GAP;
 }
 
@@ -62,6 +65,9 @@ addEventListener(
 addEventListener(
   'keyup',
   (e) => {
+    if (e.keyCode === 32) {
+      started = !started;
+    }
     delete keysDown[e.keyCode];
   },
   false
@@ -88,25 +94,19 @@ const updateHero = (modifier) => {
   }
 };
 
-let startX = 10;
-let current = Date.now();
-const updateBamboo = () => {
-  const now = Date.now();
-  if (now - current < 10) {
-    return;
-  }
-  current = now;
-  if (startX > canvas.width) {
+const updateBamboo = (modifier) => {
+  const head = bambooArray[0].x;
+  const tail = bambooArray[bambooArray.length - 1].x;
+  if (head + BAMBOO_WIDTH < 0) {
     bambooArray.shift();
-    startX -= X_GAP;
-    bambooArray.forEach((item) => {
-      item.x -= X_GAP;
-    });
-  } else {
-    startX += X_GAP;
+    const bamboo = new Bamboo(tail + X_GAP);
+    bambooArray.push(bamboo);
   }
-  const bamboo = new Bamboo(startX);
-  bambooArray.push(bamboo);
+
+  bambooArray.forEach((item) => {
+    // eslint-disable-next-line no-param-reassign
+    item.x -= BAMBOO_SPEED * modifier;
+  });
 };
 
 // draw bamboo
@@ -134,12 +134,16 @@ const render = () => {
 
 // The main game loop
 let then = Date.now();
+
 const main = () => {
   const now = Date.now();
   const delta = now - then;
 
   updateHero(delta / 1000);
-  updateBamboo();
+  if (started) {
+    updateBamboo(delta / 1000);
+  }
+
   render();
 
   then = now;
@@ -148,4 +152,17 @@ const main = () => {
   requestAnimationFrame(main);
 };
 
+let startX = 50;
+const init = () => {
+  while (startX < canvas.width) {
+    const bamboo = new Bamboo(startX);
+    bambooArray.push(bamboo);
+    startX += X_GAP;
+  }
+};
+
+init();
+
 main();
+
+// start button
