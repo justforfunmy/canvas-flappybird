@@ -14,6 +14,9 @@ const BAMBOO_SPEED = 150;
 
 const X_GAP = 160;
 
+const HERO_WIDTH = 32;
+const HERO_HEIGHT = 32;
+
 // create the canvas
 
 const canvas = document.createElement('canvas');
@@ -44,7 +47,7 @@ heroImage.onload = () => {
 
 heroImage.src = bird;
 
-const bambooArray = [];
+let bambooArray = [];
 function Bamboo(x) {
   this.x = x;
   this.width = BAMBOO_WIDTH;
@@ -89,6 +92,31 @@ addEventListener(
   false
 );
 
+// init
+
+const init = () => {
+  let startX = 400;
+  bambooArray = [];
+  hero.x = 80;
+  hero.y = canvas.height / 2;
+  started = false;
+  startNumber = 4;
+  while (startX < canvas.width + 400) {
+    const bamboo = new Bamboo(startX);
+    bambooArray.push(bamboo);
+    startX += X_GAP;
+  }
+};
+
+// judge
+
+const judgeCrash = (item) => {
+  if (hero.y < item.upHeight || hero.y + HERO_HEIGHT > item.upHeight + BAMBOO_GAP) {
+    alert('dead!');
+    init();
+  }
+};
+
 // update projects
 
 const updateHero = (modifier) => {
@@ -112,6 +140,9 @@ const updateBamboo = (modifier) => {
   }
 
   bambooArray.forEach((item) => {
+    if (item.x < hero.x + HERO_WIDTH && item.x > hero.x - BAMBOO_WIDTH) {
+      judgeCrash(item);
+    }
     // eslint-disable-next-line no-param-reassign
     item.x -= BAMBOO_SPEED * modifier;
   });
@@ -159,14 +190,9 @@ const drawText = () => {
 // draw hero
 
 const drawHero = () => {
-  ctx.save();
   if (heroReady) {
-    if (jump) {
-      ctx.rotate(-45);
-    }
     ctx.drawImage(heroImage, hero.x, hero.y);
   }
-  ctx.restore();
 };
 
 // render
@@ -204,15 +230,6 @@ const main = () => {
 
   // Request to do this again ASAP
   requestAnimationFrame(main);
-};
-
-let startX = 400;
-const init = () => {
-  while (startX < canvas.width + 400) {
-    const bamboo = new Bamboo(startX);
-    bambooArray.push(bamboo);
-    startX += X_GAP;
-  }
 };
 
 init();
