@@ -1,3 +1,4 @@
+/* eslint-disable object-curly-newline */
 /* eslint-disable no-restricted-globals */
 import img from './assets/bird.png';
 
@@ -167,17 +168,22 @@ const updateNumber = () => {
 
 // draw PIPE
 
-const drawPipe = (item) => {
-  // eslint-disable-next-line object-curly-newline
-  const { x, width, upHeight, downHeight } = item;
-  ctx.fillStyle = 'green';
-  ctx.fillRect(x, 0, width, upHeight);
-  ctx.fillRect(x, upHeight + PIPE_GAP, width, downHeight);
+const drawPipe = () => {
+  const drawItem = (item) => {
+    const { x, width, upHeight, downHeight } = item;
+    ctx.fillStyle = 'green';
+    ctx.fillRect(x, 0, width, upHeight);
+    ctx.fillRect(x, upHeight + PIPE_GAP, width, downHeight);
+  };
+  pipeArray.forEach((item) => {
+    drawItem(item);
+  });
 };
 
 // draw text
 
 const drawText = () => {
+  // 遮罩层
   if (startNumber > 0) {
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -220,9 +226,7 @@ const render = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawBird();
 
-  pipeArray.forEach((item) => {
-    drawPipe(item);
-  });
+  drawPipe();
 
   drawText();
 

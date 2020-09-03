@@ -8,6 +8,12 @@
   1. [小鸟](#小鸟)
   2. [管道](#管道)
 - [初始化](#初始化)
+- [绘制](#绘制)
+  1. [绘制小鸟](#绘制小鸟)
+  2. [绘制管道](#绘制管道)
+  3. [绘制倒计时提示语](#绘制倒计时提示语)
+  4. [绘制计数器](#绘制计数器)
+  5. [渲染](#渲染)
 
 ## 准备工作
 
@@ -91,6 +97,8 @@ function PIPE(x) {
 
 ## 初始化
 
+数据和变量初始化
+
 ```js
 const init = () => {
   pipeArray = [];
@@ -106,5 +114,86 @@ const init = () => {
     pipeArray.push(pipe);
     startX += PIPE_SPACE;
   }
+};
+```
+
+## 绘制
+
+- ### 绘制小鸟
+
+```js
+const drawBird = () => {
+  //如果图片加载完毕，则可以绘制
+  if (birdReady) {
+    ctx.drawImage(birdImage, bird.x, bird.y);
+  }
+};
+```
+
+- ### 绘制管道
+
+```js
+const drawPipe = () => {
+  const drawItem = (item) => {
+    const { x, width, upHeight, downHeight } = item;
+    ctx.fillStyle = 'green';
+    ctx.fillRect(x, 0, width, upHeight);
+    ctx.fillRect(x, upHeight + PIPE_GAP, width, downHeight);
+  };
+  pipeArray.forEach((item) => {
+    drawItem(item);
+  });
+};
+```
+
+- ### 绘制倒计时提示语
+
+```js
+const drawText = () => {
+  //遮罩层
+  if (startNumber > 0) {
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  ctx.fillStyle = '#111';
+  ctx.strokeStyle = '#111'; // 设置笔触的颜色
+  ctx.font = "bold 40px '字体','字体','微软雅黑','宋体'"; // 设置字体
+  ctx.textBaseline = 'hanging'; // 在绘制文本时使用的当前文本基线
+  ctx.textAlign = 'center';
+  if (startNumber > 0 && startNumber < 4) {
+    ctx.fillText(startNumber, canvas.width / 2, canvas.height / 2 - 30);
+  } else if (startNumber === 4) {
+    ctx.fillText('空格键开始', canvas.width / 2, canvas.height / 2 - 30);
+  }
+};
+```
+
+- ### 绘制计数器
+
+```js
+const drawCount = () => {
+  ctx.fillStyle = '#111';
+  ctx.strokeStyle = '#111'; // 设置笔触的颜色
+  ctx.font = "bold 40px '字体','字体','微软雅黑','宋体'"; // 设置字体
+  ctx.textBaseline = 'hanging'; // 在绘制文本时使用的当前文本基线
+  ctx.textAlign = 'center';
+  ctx.fillText(count, 30, 30);
+};
+```
+
+- ### 渲染
+
+```js
+const render = () => {
+  // 每次渲染时清空画布
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBird();
+
+  drawPipe();
+
+  drawText();
+
+  drawCount();
 };
 ```
