@@ -1,21 +1,22 @@
 /* eslint-disable no-restricted-globals */
-import bird from './assets/bird.png';
+import img from './assets/bird.png';
 
 const root = document.getElementById('root');
 
 // constants
 
+// 画布的宽高
 const CANVAS_WIDTH = 1200;
 const CANVAS_HEIGHT = 400;
 
-const BAMBOO_WIDTH = 40;
-const BAMBOO_GAP = 120;
-const BAMBOO_SPEED = 150;
+const PIPE_WIDTH = 40; // 管道宽度
+const PIPE_GAP = 180; // 管道间隙，即中间的安全区域
+const PIPE_SPEED = 180; // 管道移动的速度
+const PIPE_SPACE = 160; // 两个管道间横向的距离
 
-const X_GAP = 160;
-
-const HERO_WIDTH = 32;
-const HERO_HEIGHT = 32;
+const BIRD_WIDTH = 32; // 小鸟宽度
+const BIRD_HEIGHT = 32; // 小鸟高度
+const BIRD_SPEED = 150; // 小鸟移动速度
 
 // create the canvas
 
@@ -28,31 +29,35 @@ canvas.style.border = '1px solid grey';
 root.appendChild(canvas);
 
 // variables
-let started = false;
-let startNumber = 4;
+let started = false; // 游戏是否开始
+let startNumber = 4; // 游戏倒计时数字
+let count = 0; // 通过的管道数量
+let pipeArray = []; // 管道数组
 
 // game objects
 
-const hero = {
-  speed: 100,
+const bird = {
+  speed: BIRD_SPEED,
   x: 80,
   y: canvas.height / 2
 };
 
-const heroImage = new Image();
-let heroReady = false;
-heroImage.onload = () => {
-  heroReady = true;
+const birdImage = new Image();
+let birdReady = false;
+birdImage.onload = () => {
+  birdReady = true;
 };
 
-heroImage.src = bird;
+birdImage.src = img;
 
-let bambooArray = [];
-function Bamboo(x) {
+let id = 0;
+function PIPE(x) {
+  // eslint-disable-next-line no-plusplus
+  this.id = id++;
   this.x = x;
-  this.width = BAMBOO_WIDTH;
+  this.width = PIPE_WIDTH;
   this.upHeight = parseInt(Math.random() * 200 + 50, 10);
-  this.downHeight = canvas.height - this.upHeight - BAMBOO_GAP;
+  this.downHeight = canvas.height - this.upHeight - PIPE_GAP;
 }
 
 // player input
@@ -96,24 +101,27 @@ addEventListener(
 
 const init = () => {
   let startX = 400;
-  bambooArray = [];
-  hero.x = 80;
-  hero.y = canvas.height / 2;
+  pipeArray = [];
+  bird.x = 80;
+  bird.y = canvas.height / 2;
   started = false;
   startNumber = 4;
+  count = 0;
   while (startX < canvas.width + 400) {
-    const bamboo = new Bamboo(startX);
-    bambooArray.push(bamboo);
-    startX += X_GAP;
+    const pipe = new PIPE(startX);
+    pipeArray.push(pipe);
+    startX += PIPE_SPACE;
   }
 };
 
 // judge
 
 const judgeCrash = (item) => {
-  if (hero.y < item.upHeight || hero.y + HERO_HEIGHT > item.upHeight + BAMBOO_GAP) {
+  if (bird.y < item.upHeight || bird.y + BIRD_HEIGHT > item.upHeight + PIPE_GAP) {
     alert('dead!');
     init();
+  } else {
+    count = item.id;
   }
 };
 
@@ -124,27 +132,27 @@ const updateHero = (modifier) => {
     return;
   }
   if (jump) {
-    hero.y -= hero.speed * 2 * modifier;
+    bird.y -= bird.speed * 2 * modifier;
   } else {
-    hero.y += hero.speed * modifier;
+    bird.y += bird.speed * modifier;
   }
 };
 
-const updateBamboo = (modifier) => {
-  const head = bambooArray[0].x;
-  const tail = bambooArray[bambooArray.length - 1].x;
-  if (head + BAMBOO_WIDTH < 0) {
-    bambooArray.shift();
-    const bamboo = new Bamboo(tail + X_GAP);
-    bambooArray.push(bamboo);
+const updatePIPE = (modifier) => {
+  const head = pipeArray[0].x;
+  const tail = pipeArray[pipeArray.length - 1].x;
+  if (head + PIPE_WIDTH < 0) {
+    pipeArray.shift();
+    const pipe = new PIPE(tail + PIPE_SPACE);
+    pipeArray.push(pipe);
   }
 
-  bambooArray.forEach((item) => {
-    if (item.x < hero.x + HERO_WIDTH && item.x > hero.x - BAMBOO_WIDTH) {
+  pipeArray.forEach((item) => {
+    if (item.x < bird.x + BIRD_WIDTH && item.x > bird.x - PIPE_WIDTH) {
       judgeCrash(item);
     }
     // eslint-disable-next-line no-param-reassign
-    item.x -= BAMBOO_SPEED * modifier;
+    item.x -= PIPE_SPEED * modifier;
   });
 };
 
@@ -157,14 +165,14 @@ const updateNumber = () => {
   }
 };
 
-// draw bamboo
+// draw PIPE
 
-const drawBamboo = (item) => {
+const drawPipe = (item) => {
   // eslint-disable-next-line object-curly-newline
   const { x, width, upHeight, downHeight } = item;
   ctx.fillStyle = 'green';
   ctx.fillRect(x, 0, width, upHeight);
-  ctx.fillRect(x, upHeight + BAMBOO_GAP, width, downHeight);
+  ctx.fillRect(x, upHeight + PIPE_GAP, width, downHeight);
 };
 
 // draw text
@@ -187,25 +195,38 @@ const drawText = () => {
   }
 };
 
-// draw hero
+// draw BIRD
 
-const drawHero = () => {
-  if (heroReady) {
-    ctx.drawImage(heroImage, hero.x, hero.y);
+const drawBird = () => {
+  if (birdReady) {
+    ctx.drawImage(birdImage, bird.x, bird.y);
   }
+};
+
+// draw count
+
+const drawCount = () => {
+  ctx.fillStyle = '#111';
+  ctx.strokeStyle = '#111'; // 设置笔触的颜色
+  ctx.font = "bold 40px '字体','字体','微软雅黑','宋体'"; // 设置字体
+  ctx.textBaseline = 'hanging'; // 在绘制文本时使用的当前文本基线
+  ctx.textAlign = 'center';
+  ctx.fillText(count, 30, 30);
 };
 
 // render
 
 const render = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawHero();
+  drawBird();
 
-  bambooArray.forEach((item) => {
-    drawBamboo(item);
+  pipeArray.forEach((item) => {
+    drawPipe(item);
   });
 
   drawText();
+
+  drawCount();
 };
 
 // The main game loop
@@ -221,7 +242,7 @@ const main = () => {
   }
 
   if (startNumber < 0) {
-    updateBamboo(delta / 1000);
+    updatePIPE(delta / 1000);
   }
 
   render();
@@ -235,5 +256,3 @@ const main = () => {
 init();
 
 main();
-
-// start button
