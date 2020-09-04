@@ -63,9 +63,8 @@ function PIPE(x) {
 
 // player input
 
-const keysDown = {};
-let jump = false;
-let timer = null;
+let jump = false; // 是否跳跃
+let timer = null; // 保存延时器
 
 addEventListener(
   'keydown',
@@ -93,7 +92,6 @@ addEventListener(
     if (e.keyCode === 32) {
       started = true;
     }
-    delete keysDown[e.keyCode];
   },
   false
 );
@@ -128,13 +126,16 @@ const judgeCrash = (item) => {
 
 // update projects
 
-const updateHero = (modifier) => {
+const updateBird = (modifier) => {
+  // 如果还没开始，或者倒计时没到0，则不变化
   if (!started || startNumber > 0) {
     return;
   }
   if (jump) {
+    // 以2倍速度向上跳跃
     bird.y -= bird.speed * 2 * modifier;
   } else {
+    // 小鸟落下
     bird.y += bird.speed * modifier;
   }
 };
@@ -240,7 +241,7 @@ const main = () => {
   const now = Date.now();
   const delta = now - then;
 
-  updateHero(delta / 1000);
+  updateBird(delta / 1000);
   if (started) {
     updateNumber();
   }

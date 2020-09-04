@@ -15,6 +15,12 @@
   4. [绘制计数器](#绘制计数器)
   5. [渲染](#渲染)
 - [状态更新](#状态更新)
+  1. [小鸟移动](#小鸟移动)
+  2. [管道移动](#管道移动)
+  3. [倒计时](#倒计时)
+  4. [计数器更新](#计数器更新)
+- [自动循环重绘](#自动循环重绘)
+- [参考文章](#参考文章)
 
 ## 准备工作
 
@@ -198,3 +204,146 @@ const render = () => {
   drawCount();
 };
 ```
+
+## 状态更新
+
+- ### 小鸟移动
+
+首先，添加键盘事件，当按下键盘上键时，小鸟跳跃
+
+```js
+let jump = false; // 是否跳跃
+let timer = null; // 保存延时器
+
+addEventListener(
+  'keydown',
+  (e) => {
+    if (e.keyCode === 38) {
+      if (jump) {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          jump = false;
+        }, 250);
+      } else {
+        jump = true;
+        timer = setTimeout(() => {
+          jump = false;
+        }, 250);
+      }
+    }
+  },
+  false
+);
+```
+
+然后，是小鸟状态更新，modifier 是修正参数：
+
+```js
+const updateBird = (modifier) => {
+  // 如果还没开始，或者倒计时没到0，则不变化
+  if (!started || startNumber > 0) {
+    return;
+  }
+  if (jump) {
+    // 以2倍速度向上跳跃
+    bird.y -= bird.speed * 2 * modifier;
+  } else {
+    // 小鸟落下
+    bird.y += bird.speed * modifier;
+  }
+};
+```
+
+- ### 管道移动
+
+管道向左平移，移除画布外的则删除，并在数组中新增一个管道
+
+```js
+const updatePIPE = (modifier) => {
+  const head = pipeArray[0].x;
+  const tail = pipeArray[pipeArray.length - 1].x;
+  if (head + PIPE_WIDTH < 0) {
+    pipeArray.shift();
+    const pipe = new PIPE(tail + PIPE_SPACE);
+    pipeArray.push(pipe);
+  }
+
+  pipeArray.forEach((item) => {
+    if (item.x < bird.x + BIRD_WIDTH && item.x > bird.x - PIPE_WIDTH) {
+      // 此处碰撞判断
+      judgeCrash(item);
+    }
+    // 向左平移
+    item.x -= PIPE_SPEED * modifier;
+  });
+};
+```
+
+- ### 倒计时
+
+每 0.5 秒更新数字
+
+```js
+let current = Date.now();
+const updateNumber = () => {
+  const now = Date.now();
+  if (now - current > 500) {
+    startNumber -= 1;
+    current = now;
+  }
+};
+```
+
+- ### 计数器更新
+
+更新计数器的前提是碰撞判断，而每根管道都有自增 id，可用于计数
+
+```js
+const judgeCrash = (item) => {
+  if (bird.y < item.upHeight || bird.y + BIRD_HEIGHT > item.upHeight + PIPE_GAP) {
+    alert('dead!');
+    init();
+  } else {
+    count = item.id;
+  }
+};
+```
+
+## 自动循环重绘
+
+这里借助`requestAnimationFrame()`函数
+
+```js
+// The main game loop
+let then = Date.now();
+
+const main = () => {
+  const now = Date.now();
+  const delta = now - then;
+
+  // 更新所有元素的状态
+  updateBird(delta / 1000);
+  if (started) {
+    updateNumber();
+  }
+
+  if (startNumber < 0) {
+    updatePIPE(delta / 1000);
+  }
+
+  render();
+
+  then = now;
+
+  // 浏览器重绘时执行main函数，自动重绘画布
+  requestAnimationFrame(main);
+};
+
+init();
+
+main();
+```
+
+## 参考文章
+
+[How to make a simple HTML5 Canvas game](http://www.lostdecadegames.com/how-to-make-a-simple-html5-canvas-game/)
